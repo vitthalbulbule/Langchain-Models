@@ -1,0 +1,14 @@
+from langchain_openai import OpenAIEmbedding
+from dotenv import load_dotenv
+
+load_dotenv()
+
+embedding = OpenAIEmbedding(model="text-embedding-3-large")
+
+document = [
+    'Pune is best city in India',
+    'Mumbai is an capital of Maharashtra'
+]
+
+res = embedding.embed_documents(document)
+print(str(res))

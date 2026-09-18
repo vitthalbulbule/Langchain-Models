@@ -22,11 +22,12 @@ load_dotenv()
 
 llm = HuggingFaceEndpoint(
     repo_id="deepseek-ai/DeepSeek-R1",
-    task="text-generation"
+    task="text-generation",
+    
 )
 
 model = ChatHuggingFace(llm=llm)
 
-res = model.invoke("What is the capital of India ?")
+res = model.invoke("What is the future of GEN AI in India , and also available job market in 2028 as fresher ?")
 
 print(res.content)
