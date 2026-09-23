@@ -1,6 +1,7 @@
 from langchain_huggingface import HuggingFaceEndpoint,ChatHuggingFace
 from dotenv import load_dotenv
 from pydantic import BaseModel,Field
+from langchain_core.prompts import PromptTemplate
 
 load_dotenv()
  
@@ -18,9 +19,20 @@ class Review(BaseModel):
     pros : list[str] = Field(description='give the pros in simple points or advantages of the phone' )
     cons: list[str] = Field(description='give the cons in simple points or disadvantages of the phone')
 
+template = PromptTemplate(
+    template='give the review of the {phone} , in simple format',
+    input_variables=['phone']
+)
+# prompt = template.invoke({'phone':'oppo'})
+
 structured_outputt = model.with_structured_output(Review,method='json_schema')
 
-res = structured_outputt.invoke('Give the review of the Samsung Galaxy S25')
+# res = structured_outputt.invoke(prompt)
+
+
+chain = template | structured_outputt
+
+res = chain.invoke({'phone':'samsung altra'})
 
 print(res)
 
