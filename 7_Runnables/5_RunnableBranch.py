@@ -30,7 +30,7 @@ prompt2 = PromptTemplate(
 sum_chain = RunnableSequence(prompt1 , model , parser)
 
 cond_chain = RunnableBranch(
-    (lambda x:len(x.split)>100 ,RunnableSequence(prompt1 | model | parser)),
+    (lambda x:len(x.split())>100 ,RunnableSequence(prompt1 | model | parser)),
     RunnablePassthrough()
 )
 
