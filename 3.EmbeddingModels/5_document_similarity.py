@@ -15,14 +15,16 @@ document = [
     "Jasprit Bumrah is an Indian fast bowler known for his unorthodox action and yorkers."
 ]
 
-query = 'Tell me about Virat Kohali'
+query = 'Tell me about Jasprit Bumrah'
 
 doc_embedding = embedding.embed_documents(document)
 query_embedding = embedding.embed_query(query)
 
-scores = cosine_similarity([query_embedding],doc_embedding)
+scores = cosine_similarity([query_embedding],doc_embedding)[0]
 
-index , score = sorted(list(enumerate(scores)),key=lambda x:x[1])[-1]
+# index , score = sorted(list(enumerate(scores)),key=lambda x:x[1])[-1]
+
+index = scores.argmax()
 
 print(query)
 print(document[index])
