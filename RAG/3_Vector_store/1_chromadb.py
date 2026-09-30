@@ -5,6 +5,8 @@ from langchain_chroma import Chroma
 import chromadb
 from langchain_core.documents import Document
 
+from langchain_community import retrievers
+
 documents = [
     Document(
         page_content="""Virat Kohli is an Indian international cricketer known for his batting ability,
@@ -51,10 +53,15 @@ vector_store = Chroma(
 
 # print(que)
 
-result = vector_store.similarity_search_with_score(
-    "aggressive style of play",
-    k=3
-)
+# result = vector_store.similarity_search_with_score(
+#     "aggressive style of play",
+#     k=3
+# )
 
-for doc, score in result:
-    print(doc.metadata["player"], score)
+retriver = vector_store.as_retriever(search_kwargs={"k":2})
+
+query = 'tell me about langchain'
+result = retriver.invoke(query)
+
+for doc in result:
+    print(doc.page_content)
