@@ -10,14 +10,24 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 # Vector store
 from langchain_chroma import Chroma
 
+from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnableParallel , RunnablePassthrough , RunnableLambda
+from langchain_core.output_parsers import StrOutputParser
 # For using MMR does not require to import statement
 
 load_dotenv()
 
 llm = HuggingFaceEndpoint(
-    repo_id='deepseek-ai/DeepSeek-R1',
+    repo_id='meta-llama/Llama-3.1-8B-Instruct',
     task="conversational"
 )
+
+# llm = HuggingFaceEndpoint(
+#     repo_id='XiaomiMiMo/MiMo-V2.6-Pro-RL',
+#     task="conversational"
+# )
+
+
 
 model = ChatHuggingFace(llm=llm)
 
@@ -25,15 +35,17 @@ embedding = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L
 
 # 1. Load PDF
 
-loader = PyPDFLoader('RAG_Application\TECESyllabus-Draft 14-5-2026 (1).pdf')
+loader = PyPDFLoader('RAG_Application/TECESyllabus-Draft 14-5-2026 (1).pdf')
 documentss = loader.load()
 
 # 2. Text Splitter
 
 splitter = RecursiveCharacterTextSplitter(
-    chunk_size=200,
-    chunk_overlap = 20
+    chunk_size=1000,
+    chunk_overlap = 100
 )
+
+
 
 split_text = splitter.split_documents(documentss)
 
@@ -51,25 +63,43 @@ vector_store.add_documents(split_text)
 
 retrivar = vector_store.as_retriever(
     search_type='mmr',
-    search_lwargs={'k':2}
+    
 )
 
-query = 'Give me the exact unit wise syallubs for the Artificial Intelligence subject ?'
-docs = retrivar.invoke(query)
 
-context = "\n\n".join(
-    doc.page_content for doc in docs
-)
 
-from langchain_core.prompts import PromptTemplate
+
+# docs = retrivar.invoke(query)
+
+# context = "\n\n".join(
+#     doc.page_content for doc in docs
+# )
+
+def format_docs(retrieved_docs):
+  context_text = "\n\n".join(doc.page_content for doc in retrieved_docs)
+  return context_text
+
+parallel_chain = RunnableParallel({
+    'context': retrivar | RunnableLambda(format_docs),
+    'question': RunnablePassthrough()
+})
+
+
 
 template = PromptTemplate(
-    template= 'Answer the question using the following context. Context {context} Question {question}',
-    input_variables=['context','query']
+    template= """Answer the Following question using the provided context. 
+    if the context is not sufficient , simple saind ,'i dont know..! Please provide correct Info'
+    {context} 
+    Question : {question}""",
+    input_variables=['context','question']
 )
 
-res = model.invoke(template)
+parser = StrOutputParser()
 
-for i,r in res:
-    print("*** {i+1} ***")
-    print(r.page_content)
+final_chain = parallel_chain | template | model | parser
+
+
+question = 'List the all Computer Network Laboratory praticles ?'
+res = final_chain.invoke(question)
+
+print(res)
